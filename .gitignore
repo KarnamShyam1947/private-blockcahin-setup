@@ -1,0 +1,7 @@
+env
+
+boot-node/*
+node1/*
+node2/*
+
+run
