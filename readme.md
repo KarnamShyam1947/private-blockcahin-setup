@@ -1,151 +1,167 @@
+# Private Ethereum Blockchain Setup
+
+This repository provides the steps to set up a private Ethereum blockchain using Geth. Follow the instructions to create and configure nodes, a bootnode, and the genesis file to start a private Ethereum network.
+
+## Introduction
+
+### Why Set Up a Private Ethereum Chain?
+
+A private Ethereum blockchain is ideal for:
+
+- Testing smart contracts or dApps in a controlled environment.
+- Experimenting with Ethereum configurations without interacting with the public network.
+- Implementing permissioned blockchain solutions for businesses.
+- Learning Ethereum in a safe and isolated network.
+
+This setup will give you complete control over the blockchain, including who can join and who can mine on it.
+
+### Why Geth?
+
+Geth (Go Ethereum) is the most popular client for running an Ethereum node. It is widely supported, reliable, and feature-rich. It allows you to:
+
+- Create private networks for testing and development.
+- Run Ethereum nodes and interact with the network.
+- Mine and validate transactions on your private chain.
+
+## Tools Required
+
+Before you begin, ensure that you have the following tools installed:
+
+1. **Geth** (version <= 1.13.15)  
+   You can download Geth from [here](https://geth.ethereum.org/downloads/).
+   
+2. **Bootnode**  
+   You can download Bootnode from [here](https://github.com/ethereum/go-ethereum/wiki/Bootnode).
+
+## Setup Steps
+
+### 1. Create Folders for Node Data
+
+To organize your Ethereum node data, create directories for each node and the bootnode:
+
 ```bash
-geth --datadir=node1 init genesis.json
-geth --datadir=node2 init genesis.json
-geth --datadir=node3 init genesis.json
+mkdir -p node1 node2 boot-node
 ```
 
+### 2. Create New Accounts for Nodes
 
-geth \
-    --datadir=node1 \
-    --networkid 8765 \
-    --port 30303 \
-    --rpc \
-    --rpcport 3030 
-    --http \
-    --http.port 8545 \
-    --http.api eth,web3,personal,net \
-    --allow-insecure-unlock \
-    --http.corsdomain "*" \
-    --mine \
-    --miner.threads=1 \
-    --unlock "0" \
-    --password node1/password.txt
+Generate new Ethereum accounts for your nodes. Make sure to store the account address and password securely for future use.
 
-geth --datadir=node1 --networkid 8765 --allow-insecure-unlock --rpc --rpcport 30303 console
+```bash
+geth --datadir ./node1/data account new
+geth --datadir ./node2/data account new
+```
 
-To deploy contracts using a specific account in Geth, you will need the **private key** of the account. Here's how to get the private key of the account created on `node1`:
+### 3. Create the Genesis File (`genesis.json`)
 
-### Step 1: Locate the Account in `node1`
+The `genesis.json` file is required to define the initial state of the blockchain. You need to add the account info generated in step 2 into this file.
 
-When you create an account with `geth account new --datadir=node1`, it generates a **keystore file** for that account. This file is stored in the `keystore` directory inside your `datadir` (in this case, `node1`).
+Example of a `genesis.json` file:
 
-### Step 2: Find the Keystore File
-
-1. **Navigate to the `node1` directory**:
-
-   ```bash
-   cd private-blockchain/node1
-   ```
-
-2. **Locate the `keystore` directory**:
-
-   The keystore files are stored in the `keystore` folder within the `datadir` (the `node1` directory).
-
-   ```bash
-   ls node1/keystore/
-   ```
-
-   You'll see files like:
-
-   ```
-   UTC--<timestamp>--<account_address>
-   ```
-
-   For example:
-
-   ```
-   UTC--2023-03-25T12-34-56.789Z--f82a6f5316bb042f2e2b5b44b26f246d0bcb49f0
-   ```
-
-   This file is the **encrypted file** containing your account's private key.
-
-### Step 3: Extract the Private Key
-
-To extract the private key, you will need to decrypt the keystore file using the **password** you set when you created the account. You can do this using `geth` with the following command:
-
-1. **Run the `geth` console**:
-
-   ```bash
-   geth --datadir=node1 console
-   ```
-
-   This will start a Geth console where you can interact with your Ethereum node.
-
-2. **Unlock the Account**:
-
-   In the Geth console, unlock the account by providing the password. Assuming your account address is `0x<your_account_address>`, run:
-
-   ```javascript
-   personal.unlockAccount("0x<your_account_address>", "yourpassword", 15000)
-   ```
-
-   - Replace `0x<your_account_address>` with the actual Ethereum address.
-   - Replace `yourpassword` with the password you created for the account.
-
-   This will unlock the account for 15 seconds (you can adjust the time as needed).
-
-3. **Export the Private Key**:
-
-   After unlocking the account, you can get the private key by running the following command:
-
-   ```javascript
-   eth.accounts[0]
-   ```
-
-   This will show the account details, including the private key, in the following format:
-
-   ```
-   0x<your_account_address>
-   ```
-
-   While the above command does not show the private key directly, you can run the following command to extract the private key if you still need it:
-
-   ```javascript
-   personal.exportRawKey("0x<your_account_address>", "yourpassword")
-   ```
-
-   This will return the **private key** of your account. It will look like this:
-
-   ```
-   0x<your_private_key>
-   ```
-
-   **Important**: Keep this private key safe. If someone gains access to it, they can control your account.
-
-### Step 4: Use the Private Key to Deploy Contracts with Hardhat
-
-Once you have the private key, you can use it to deploy contracts using Hardhat. In your Hardhat configuration (`hardhat.config.js`), add the private key to the network configuration as follows:
-
-```javascript
-require("@nomiclabs/hardhat-ethers");
-
-module.exports = {
-  solidity: "0.8.0",
-  networks: {
-    private: {
-      url: "http://localhost:8545",
-      accounts: ["<your_private_key>"]
+```json
+{
+    "config": {
+        "chainId": 98765,
+        "homesteadBlock": 0,
+        "eip150Block": 0,
+        "eip155Block": 0,
+        "eip158Block": 0,
+        "byzantiumBlock": 0,
+        "constantinopleBlock": 0,
+        "petersburgBlock": 0,
+        "istanbulBlock": 0,
+        "muirGlacierBlock": 0,
+        "berlinBlock": 0,
+        "londonBlock": 0
+    },
+    "difficulty": "0x20000",
+    "gasLimit": "0x8000000",
+    "alloc": {
+        "0x74aBc0b0790561F810EdfD5b32Ed9748AfaA0e4c": {
+            "balance": "10000000000000000000000000"
+        }
     }
-  }
-};
+}
 ```
 
-Replace `<your_private_key>` with the private key you just retrieved.
+### 4. Initialize the Nodes
+
+Initialize each node with the `genesis.json` file. This step sets up the blockchain configuration on each node.
+
+```bash
+geth --datadir ./node1/data init genesis.json
+geth --datadir ./node2/data init genesis.json
+```
+
+### 5. Generate Key for Bootnode
+
+Bootnodes are used to bootstrap the network. You need to generate a key for the bootnode:
+
+```bash
+bootnode -genkey boot.key
+```
+
+### 6. Start the Bootnode
+
+Start the bootnode with the generated key. The bootnode helps in discovering other nodes on the network.
+
+```bash
+bootnode -nodekey boot.key -verbosity 7 -addr "0.0.0.0:30301"
+```
+
+### 7. Export Environment Variables
+
+To allow the unlocking of accounts, export the following environment variable:
+
+#### On Linux/macOS:
+
+```bash
+export GETH_ALLOW_INSECURE_UNLOCK=true
+```
+
+#### On Windows:
+
+On Windows, environment variables are set differently:
+
+1. Open **Command Prompt** or **PowerShell**.
+2. Run the following command to set the environment variable temporarily for the current session:
+
+   ```bash
+   set GETH_ALLOW_INSECURE_UNLOCK=true
+   ```
+
+   This will allow the node to unlock accounts. If you want to set the variable permanently, you can do so through the **Environment Variables** section in **System Properties** (Control Panel > System and Security > System > Advanced System Settings > Environment Variables).
+
+### 8. Start the Nodes
+
+Start the Ethereum nodes and connect them to the bootnode to join the network. Make sure to replace the bootnode enode URL with your own.
+
+```bash
+geth \
+    --datadir node1 \
+    --port 30304 \
+    --bootnodes enode://716ab29f4a94f4c096ca79cb0ba2272360240caef81f327e3cb49af9c696b20eb80c4f1c5c24aa1e0cde4e1d888dd6228a761e1773e32e496c975e8e7833f106@127.0.0.1:0?discport=30301 \
+    --authrpc.port 8547 \
+    --ipcdisable \
+    --http \
+    --http.addr 0.0.0.0 \
+    --http.crossdomain="*" \
+    --http.api web3,eth,debug,personal,net \
+    --networkid 98765 \
+    --unlock 0x74aBc0b0790561F810EdfD5b32Ed9748AfaA0e4c \
+    --password pswd.txt \
+    --mine \
+    --miner.etherbase=0x74aBc0b0790561F810EdfD5b32Ed9748AfaA0e4c
+```
+
+### 9. Repeat for Other Nodes
+
+You can repeat the above steps to start additional nodes like `node2`, connecting them to the bootnode for synchronization.
 
 ---
 
-### Security Note:
-- **Never expose your private key** in public or share it in unsecured environments.
-- Consider using environment variables to securely store private keys, especially when working in a development environment or deploying to production. For example:
+## Conclusion
 
-```javascript
-accounts: [process.env.PRIVATE_KEY]
-```
+You now have a fully functional private Ethereum network running with multiple nodes. You can interact with the network, deploy smart contracts, and test your dApps in a private, isolated environment.
 
-And set your private key in an `.env` file like this:
-
-```bash
-PRIVATE_KEY=your_private_key_here
-```
-
-Let me know if you need further assistance!
+For further information or issues, feel free to open an issue on this repository.
